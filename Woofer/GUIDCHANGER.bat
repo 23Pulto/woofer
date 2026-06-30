@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableDelayedExpansion
-title Change Windows MachineGuid
+title Random Windows MachineGuid Changer
 color 0B
 
 :: Check admin
@@ -18,7 +18,7 @@ set "BACKUP_FILE=%USERPROFILE%\Desktop\MachineGuid_Backup.reg"
 
 cls
 echo ==================================================
-echo              MachineGuid Changer
+echo          Random MachineGuid Changer
 echo ==================================================
 echo.
 echo Current MachineGuid:
@@ -38,34 +38,31 @@ if %errorlevel% neq 0 (
 
 echo Backup created.
 echo.
-echo Enter your new GUID in this format:
-echo xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-echo.
-echo Example:
-echo 12345678-1234-1234-1234-123456789abc
-echo.
 
-set /p "NEW_GUID=New MachineGuid: "
+:: Generate random GUID using PowerShell
+for /f "delims=" %%G in ('powershell -NoProfile -Command "[guid]::NewGuid().ToString()"') do (
+    set "NEW_GUID=%%G"
+)
 
 if "%NEW_GUID%"=="" (
-    echo No GUID entered. Cancelled.
+    echo Failed to generate a new GUID.
     pause
     exit /b
 )
 
-:: Validate GUID format using PowerShell
+echo Generated new MachineGuid:
+echo %NEW_GUID%
+echo.
+
+:: Validate generated GUID format just in case
 powershell -NoProfile -Command "if ('%NEW_GUID%' -match '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') { exit 0 } else { exit 1 }"
 
 if %errorlevel% neq 0 (
-    echo.
-    echo Invalid GUID format, bro. You typed it wrong.
-    echo Use this format:
-    echo xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    echo Generated GUID was invalid somehow. Windows had one job.
     pause
     exit /b
 )
 
-echo.
 echo Changing MachineGuid...
 reg add "%REG_PATH%" /v "%VALUE_NAME%" /t REG_SZ /d "%NEW_GUID%" /f >nul
 
